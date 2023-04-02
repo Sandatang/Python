@@ -38,24 +38,37 @@ class App:
             self.main_frame = ttk.Frame(self.master, padding = (5, 20, 5,))
             self.main_frame.grid()
             self.master.geometry("1215x400")
-            ttk.Label(self.main_frame, text="Students", font=("TkDefaultFont", 20)).grid(column=0, row=0)
 
-            self.treeview = ttk.Treeview(self.main_frame, columns=("Student Id", "Idno", "Lastname", "Firstname", "Course", "Level"), show="headings")
-
-
-            db_connectioin = connect(**db)
-            cursor = db_connectioin.cursor()
-            cursor.execute("select * from student")
-
-            for i in range(len(self.treeview['columns'])):
-                self.treeview.heading(self.treeview['columns'][i], text=self.treeview['columns'][i])
-
-            for data in reversed(cursor.fetchall()):
-                self.treeview.insert("", "0", values=(data[0],data[1],data[2],data[3],data[4],data[5]))
-            self.treeview.grid(column=0, row=1)
+            self.show = ttk.Button(self.main_frame, text="Show all students")
+            self.show.grid(column=0, row=0)
+            self.show.configure(command=self.generateDataOfStudents)
 
         else:
             ttk.Label(self.login_frame, text="Invalid username or password", foreground="red").grid(column=1, row=3)
+    
+    def generateDataOfStudents(self):
+        self.show.grid_remove()
+        self.treeview = ttk.Treeview(self.main_frame, columns=("Student Id", "Idno", "Lastname", "Firstname", "Course", "Level"), show="headings")
+
+        db_connectioin = connect(**db)
+        cursor = db_connectioin.cursor()
+        cursor.execute("select * from student")
+        #set headings
+        for i in range(len(self.treeview['columns'])):
+            self.treeview.heading(self.treeview['columns'][i], text=self.treeview['columns'][i])
+        #inserting data to treeview
+        for data in reversed(cursor.fetchall()):
+            self.treeview.insert("", "0", values=(data[0],data[1],data[2],data[3],data[4],data[5]))
+        self.treeview.grid(column=0, row=1)
+
+        self.hide = ttk.Button(self.main_frame, text="Hide")
+        self.hide.grid(column=0, row=2, pady=50)
+        self.hide.configure(command=self.clearTreeview)
+    
+    def clearTreeview(self):
+        self.treeview.grid_remove()
+        self.show.grid()
+        self.hide.grid_remove()
 
 root = tk.Tk()
 app = App(root)
