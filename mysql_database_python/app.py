@@ -1,13 +1,16 @@
 from StudentOOP import *
+from Query import *
 import os
 from tabulate import tabulate
 
-db = {
-    "host":"localhost",
-    "user":"root",
-    "password":"",
-    "database":"pythondb"
-}
+
+#region --Additional functions--
+def table(data):
+    header = ["Id","Idno","Lastname","Firstanme","Course","Level"]       
+    return tabulate(data, headers=header,tablefmt="fancy_grid") if data != [] else False
+
+def header(title):
+    return print(f"-----{title}-----\n\n")
 
 def attemptRequest(**kwargs):
     return Student(**kwargs)
@@ -22,16 +25,18 @@ def userInputs():
     )
     return validation
 
-def screenPause(*mssg):
-    return input(f"\n{mssg}. Press enter to continue...")
+def screenPause(mssg):
+    return input(f"\n\n{mssg}. Press enter to continue...")
+#endregion
 
+#region --Main Menu request to Controller and View--
 def addData():
     clearScreen()
     header("Add Student")
     validation = userInputs()
 
     if no_blank := validation.check_DATA():
-        query = Query(db, "student", **validation.getStudentDATA())
+        query = Query("student", **validation.getStudentDATA())
         message = query.addQuery()
         screenPause(message)
 
@@ -42,7 +47,7 @@ def findStudent(*args):
     title = 'Update' if args else 'Find'
     header(f"{title} Student")
     idno = input("Enter idno:")
-    query = Query(db, "student", idno=idno)
+    query = Query("student", idno=idno)
     data = query.findQuery()
     searched  = table(data)
 
@@ -55,25 +60,26 @@ def deleteStudent():
     data = findStudent(True)
 
     if data != False:
-        print(data)
         decision = input("\n Do you want to delete this student (y/n): ")
 
         if decision == 'y':
-            query = Query(db, "student",idno=data[0][1])
+            query = Query("student",idno=data[0][1])
             affected = query.deleteQuery() > 0
             print("Successfully deleted" if affected else "Something wrong was occured. Try again later")
         else:
             print("Action was cancelled.")
         input("Press enter to continue...")
     else:
-        screenPause("No records")
+        screenPause("Student do not exist.")
 
 def updateStudent():
     clearScreen()
     data = findStudent(True)
+
     if data:
         print("Update Details")
         print(f"Idno    : {data[0][1]}")
+
         validation = attemptRequest(
             idno = data[0][1].lower(),
             lastname = input(f"Enter lastname (default: {data[0][2]}): ").strip().title() or data[0][2],
@@ -81,35 +87,47 @@ def updateStudent():
             course = input(f"Enter course (default: {data[0][4]}): ").strip().upper() or data[0][4],
             level = input(f"Enter level (default: {data[0][5]}): ").strip() or data[0][5],
         )
+
         decision = input("Do you want to proceed (y/n)  :")
+
         if decision == 'y':
-            query = Query(db, "student", **validation.getStudentDATA())
+            query = Query("student", **validation.getStudentDATA())
             affected = query.updateQuery()
             screenPause("Updated successfully")
-        else:screenPause("Action was cancelled")
-    else:screenPause("No records")
 
+        else:screenPause("Action was cancelled")
+
+    else:screenPause("No record")
 
 def displayAll():
     clearScreen()
     header("Display All")
-    query = Query(db, "student")
+    query = Query("student")
     data = query.selectAllQuery()
-    searched = table(data)
-    print(searched if searched != False else "No records")
+    output = table(data)
+    print(output if output != False else "No records")
+    screenPause("No further data available.")
+#endregion
 
-def table(data):
-    header = ["Id","Idno","Lastname","Firstanme","Course","Level"]       
-    return tabulate(data, headers=header,tablefmt="fancy_grid") if data != [] else False
+#region --Authentication--
+def login():
+    clearScreen()
+    user = input("Username  :")
+    pwrd = input("Password  :")
 
-def header(title):
-    return print(f"-----{title}-----\n\n")
+    query = Query("users", username=user)
+    exist = query.findQuery()
+    if exist != []:
+        for i in range(0,len(exist)):
+            return True if exist[i][2] == pwrd else False
+    else: return False
+#endregion
 
+#region --View Components--
 def terminate():
     clearScreen()
     print("Program Terminated.")
     
-
 def getOptions(option):
     options:dict = {
         1:addData,
@@ -141,10 +159,18 @@ def clearScreen():
 
 def main():
     option = 999
-    while option != 0:
-        menu()
-        option = int(input("Test:"))
-        getOptions(option)
+    exist = login()
+    if exist:
+        while option != 0:
+            menu()
+            try:
+                option = int(input("Test:"))
+                getOptions(option)
+            except:
+                screenPause("Invalid Input.")
+
+    else: clearScreen(), print("Invalid Credentails. Program Terminated")
+#endregion
 
 if __name__ == "__main__":
     main()
