@@ -2,6 +2,7 @@ from StudentOOP import *
 from Query import *
 import os
 from tabulate import tabulate
+from pwinput import pwinput
 
 
 #region --Additional functions--
@@ -112,8 +113,8 @@ def displayAll():
 #region --Authentication--
 def login():
     clearScreen()
-    user = input("Username  :")
-    pwrd = input("Password  :")
+    user = input("Username: ")
+    pwrd = pwinput()
 
     query = Query("users", username=user)
     exist = query.findQuery()
